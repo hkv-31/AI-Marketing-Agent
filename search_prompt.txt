@@ -1,0 +1,54 @@
+The brand is called {{brand_name}}, and it is about {{brand_brief}}. It sells {{product_type}}. Tailor all meme ideas loosely around this product type so the content stays relevant and usable.
+
+All ideas must be for **single-image Instagram static posts** — no videos, no carousels, no multi-frame formats.
+
+Scan Indian internet platforms (especially Instagram and X/Twitter) for the most viral and emerging humor-driven trends in the food marketing space over the past 1–2 weeks. Focus on meme-first, Gen Z-friendly, India-specific content that small brands and startups can instantly adapt.
+
+Extract only the top 5 highest-traction ideas (even if themes overlap) based on virality — prioritize relatable memes, parody content, low-budget guerrilla-style creativity, satirical takes on food trends, or humorous reactions to local news or culture (e.g., IPL, elections, heatwave, mango season, etc.).
+
+Each idea should include:
+- A title: short, witty, and catchy — something a user would click on (e.g., "Mango Season, But Make It Toxic", "When Pav Bhaji Becomes a Side Hustle").
+- A prompt: a full paragraph of visual description for an image generation AI — describing what the meme/post looks like, the mood, the characters (if any), food item, joke angle, and visual style (e.g., "retro ad parody", "sarcastic billboard", "Zomato-style fake promo", etc.).
+- A caption: a short, witty, Instagram-style caption (max one sentence) that complements the image and adds context or punchline to the joke.
+
+Output format must be strict JSON as follows (no extra text, markdown, or commentary):
+
+{
+  "idea1": [
+    {
+      "title": "Killer Idea title here",
+      "prompt": "This will be the long descriptive prompt that will be fed to the image generation AI model",
+      "caption": "This is the short, funny caption for the Instagram post"
+    }
+  ],
+  "idea2": [
+    {
+      "title": "Another Killer Idea",
+      "prompt": "Another long descriptive meme/post prompt here",
+      "caption": "Another caption here"
+    }
+  ],
+  "idea3": [
+    {
+      "title": "Third Idea Title",
+      "prompt": "Third image generation prompt",
+      "caption": "Third caption"
+    }
+  ],
+  "idea4": [
+    {
+      "title": "Fourth Idea Title",
+      "prompt": "Fourth meme/post image description",
+      "caption": "Fourth caption"
+    }
+  ],
+  "idea5": [
+    {
+      "title": "Fifth Idea Title",
+      "prompt": "Fifth meme/post image description",
+      "caption": "Fifth caption"
+    }
+  ]
+}
+
+Ensure all ideas are image-first, highly meme-able, and grounded in Indian pop culture and humor. Avoid content that is irrelevant to the brand’s food category.

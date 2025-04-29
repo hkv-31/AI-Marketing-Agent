@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trendly AI</title>
+    <!-- Retro Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --mario-red: #E52521;
+        --mario-blue: #049CD8;
+        --mario-yellow: #FBD000;
+        --sky-blue: #5C94FC;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Luckiest Guy', cursive;
+        image-rendering: pixelated;
+      }
+      body {
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+        color: white;
+      }
+      /* Animations */
+      @keyframes moveClouds { from { background-position: 0 0; } to { background-position: 1000px 0; } }
+      @keyframes buttonJump { to { transform: translateY(-8px); } }
+      @keyframes shake { 20%,80% { transform: translate(-50%, -50%) translateX(-2px); } 40%,60% { transform: translate(-50%, -50%) translateX(2px); } }
+      @keyframes zipOut { to { transform: translateX(120%) scale(0.8); opacity: 0; } }
+      @keyframes zipIn  { from { transform: translateX(-120%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+      .shake   { animation: shake 0.3s ease-in-out forwards; }
+      .zip-out { animation: zipOut 0.3s ease-in forwards; }
+      .zip-in  { animation: zipIn  0.3s ease-out forwards; }
+
+      .game-container { position: relative; width: 100%; height: 100%; }
+      .sky { 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background-image: url('resources/bg.png');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.75;
+        z-index: -10; 
+      }
+
+      .game-title {
+        position: absolute;
+        top: calc(20px + 15vh); /* Increased from 10vh to 15vh */
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 70px;
+        letter-spacing: 10px;
+        color: white;
+        text-shadow: 5px 5px 0 #000, 
+                     1px 1px 10px rgba(255,255,0,0.7),
+                     -1px -1px 10px rgba(255,255,0,0.7);
+        padding: 10px 25px;
+        border-radius: 8px;
+        z-index: 100;
+      }
+
+      /* Specific style for the start block only */
+      #start-block {
+        width: 650px;
+        height: 260px;
+        top: 50% !important; /* Moved from 47% to 50% */
+      }
+
+      .page-block {
+        position: absolute;
+        top: 62%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 700px;
+        height: 500px;
+        background: var(--mario-yellow);
+        border: 4px solid #000;
+        border-radius: 8px;
+        display: none;
+        align-items: center;
+        justify-content: flex-start;
+        flex-direction: column;
+        box-shadow: 0 8px 0 rgba(0,0,0,0.5);
+        z-index: 50;
+        padding: 30px;
+        padding-top: 50px;
+        overflow-y: auto; /* Add vertical scrolling when content overflows */
+        max-height: 500px; /* Ensure fixed height */
+      }
+      
+      /* Custom scrollbar styling */
+      .page-block::-webkit-scrollbar {
+        width: 10px;
+      }
+      
+      .page-block::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.1);
+        border-radius: 5px;
+      }
+      
+      .page-block::-webkit-scrollbar-thumb {
+        background: var(--mario-blue);
+        border-radius: 5px;
+        border: 2px solid #000;
+      }
+      
+      .page-block::-webkit-scrollbar-thumb:hover {
+        background: var(--mario-red);
+      }
+
+      .page-block.active { display: flex; }
+
+      .start-button {
+        width: 80%;
+        height: 80%;
+        background: var(--sky-blue);
+        color: #fff;
+        border: 4px solid #000;
+        font-size: 32px;
+        cursor: pointer;
+        text-shadow: 2px 2px 0 #000;
+        box-shadow: 0 6px 0 #000;
+        transition: transform 0.2s;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.5;
+      }
+      .start-button:hover {
+        animation: buttonJump 0.3s ease-in-out alternate infinite;
+      }
+      .start-button:active { transform: translateY(6px); box-shadow: 0 0 #000; }
+
+      .search-button {
+        padding: 10px 20px;
+        height: 46px; /* Fixed height */
+        background: var(--mario-red);
+        color: #fff;
+        border: 4px solid #000;
+        font-size: 14px;
+        cursor: pointer;
+        text-shadow: 2px 2px 0 #000;
+        box-shadow: 0 6px 0 #000;
+        transition: transform 0.2s;
+        border-radius: 8px;
+        margin: 10px 0;
+        position: relative;
+      }
+      .search-button:hover {
+        animation: buttonJump 0.3s ease-in-out alternate infinite;
+      }
+      .search-button:active { transform: translateY(6px); box-shadow: 0 0 #000; }
+      
+      .search-button.uploaded {
+        background: #2ecc71; /* Green for uploaded state */
+      }
+      
+      .file-count {
+        position: absolute;
+        right: -150px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #000;
+        font-size: 16px;
+        text-shadow: none; /* Remove any shadow for better visibility */
+      }
+
+      .nav-container {
+        position: fixed;
+        bottom: calc(180px - 5vh); /* moved down 5% */
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--mario-red);
+        border: 4px solid #000;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: none; /* Hide the navigation bar */
+        gap: 10px;
+        box-shadow: 0 6px 0 #000;
+        z-index: 100;
+      }
+      .nav-button {
+        background: var(--mario-blue); 
+        border: 4px solid #000; 
+        padding: 14px 18px; 
+        font-size: 14px; 
+        color: #fff; 
+        cursor: pointer; 
+        text-shadow: 2px 2px 0 #000; 
+        border-radius: 8px;
+        transition: transform 0.2s;
+      }
+      .nav-button:hover {
+        animation: buttonJump 0.3s ease-in-out alternate infinite;
+      }
+      .nav-button.active { background: var(--mario-yellow); color: #000; text-shadow: 1px 1px 0 #fff; }
+      
+      .reset-button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 70px;
+        height: 70px;
+        background: var(--mario-blue);
+        color: #fff;
+        border: 4px solid #000;
+        border-radius: 50%;
+        font-size: 30px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 0 #000;
+        z-index: 200;
+        transition: transform 0.2s;
+      }
+      
+      .reset-button:hover {
+        animation: buttonJump 0.3s ease-in-out alternate infinite;
+      }
+      
+      .reset-button:active {
+        transform: translateY(6px);
+        box-shadow: 0 0 #000;
+      }
+      
+      /* Form elements styling */
+      .form-group {
+        width: 100%;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .form-label {
+        margin-bottom: 8px;
+        color: #000;
+        font-size: 16px;
+        text-shadow: 1px 1px 0 #fff;
+      }
+      
+      .form-input {
+        width: 100%;
+        height: 46px; /* Fixed height matching buttons */
+        padding: 8px 12px;
+        background: #fff;
+        border: 3px solid #000;
+        border-radius: 5px;
+        font-size: 16px;
+        color: #000;
+      }
+      
+      .form-textarea {
+        width: 100%;
+        height: 120px; /* Taller for multiple lines */
+        padding: 8px 12px;
+        background: #fff;
+        border: 3px solid #000;
+        border-radius: 5px;
+        font-size: 16px;
+        color: #000;
+        resize: none;
+        font-family: 'Luckiest Guy', cursive;
+      }
+      
+      .form-select {
+        width: 100%;
+        height: 46px; /* Fixed height matching buttons */
+        padding: 8px 12px;
+        background: #fff;
+        border: 3px solid #000;
+        border-radius: 5px;
+        font-size: 16px;
+        color: #000;
+        cursor: pointer;
+      }
+      
+      .file-input-container {
+        display: none;
+      }
+      
+      .next-step-button {
+        width: 100%;
+        height: 46px; /* Match search-button height */
+        padding: 10px 20px; /* Match search-button padding */
+        background: var(--sky-blue);
+        color: #fff;
+        border: 4px solid #000;
+        font-size: 16px;
+        cursor: pointer;
+        text-shadow: 2px 2px 0 #000;
+        box-shadow: 0 6px 0 #000;
+        border-radius: 8px;
+        margin-top: 20px; /* Reduced from 30px to 20px */
+        transition: transform 0.2s;
+      }
+      
+      .next-step-button:hover {
+        animation: buttonJump 0.3s ease-in-out alternate infinite;
+      }
+      
+      .next-step-button:active {
+        transform: translateY(6px);
+        box-shadow: 0 0 #000;
+      }
+      /* Disabled styling for next step button */
+      .next-step-button:disabled {
+        background: #ccc;
+        color: #888;
+        box-shadow: 0 6px 0 #555;
+        cursor: not-allowed;
+      }
+      /* Selection Box for Trends */
+      .selection-box {
+        background: #FFF199;
+        border: 3px solid #000;
+        border-radius: 8px;
+        width: 100%;
+        margin-bottom: 20px;
+        padding: 15px;
+      }
+      .selection-box table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .selection-box td {
+        padding: 8px;
+        vertical-align: middle;
+      }
+      .option-text {
+        font-size: 14px;
+        color: #000;
+        display: flex;
+        align-items: center;
+      }
+      .expand-button {
+        background: none;
+        border: none;
+        font-size: 16px;
+        margin-left: 8px;
+        cursor: pointer;
+      }
+      .option-select {
+        width: 10%;
+        text-align: center;
+      }
+      .option-select input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--mario-blue);
+      }
+      #step3-button:disabled {
+        background: #ccc;
+        color: #666;
+        box-shadow: 0 6px 0 #888;
+        cursor: not-allowed;
+      }
+      #step3-button.enabled {
+        background: var(--sky-blue);
+        color: #fff;
+        box-shadow: 0 6px 0 #000;
+        cursor: pointer;
+      }
+
+      /* Output display for JSON results */
+      .output-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 400px;
+        max-height: 80vh;
+        background: rgba(0, 0, 0, 0.8);
+        border: 3px solid var(--mario-yellow);
+        border-radius: 8px;
+        padding: 15px;
+        z-index: 999;
+        overflow-y: auto;
+        display: none;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        color: #fff;
+      }
+      
+      .loading-indicator {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 1000;
+        display: none;
+        text-align: center;
+        font-size: 18px;
+      }
+      
+      .loading-indicator:after {
+        content: '...';
+        animation: dots 1.5s steps(5, end) infinite;
+      }
+      
+      @keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60% { content: '...'; }
+        80%, 100% { content: ''; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <div class="sky"></div>
+      <div class="game-title">TRENDLY AI</div>
+
+      <!-- Output container for JSON results -->
+      <div class="output-container" id="json-output"></div>
+      <div class="loading-indicator" id="loading-indicator">SEARCHING FOR TRENDS</div>
+
+      <!-- Page Blocks -->
+      <div class="page-block" id="start-block">
+        <button class="start-button">
+          START<br>NOW
+        </button>
+      </div>
+      
+      <div class="page-block" id="branding-block">
+        <div class="form-group">
+          <label class="form-label" for="brand-name">BRAND NAME 🏢</label>
+          <input type="text" id="brand-name" class="form-input" placeholder="Enter your brand name">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="brand-industry">BRAND INDUSTRY 🍔</label>
+          <select id="brand-industry" class="form-select">
+            <option value="food">Food Industry</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="brand-product">PRODUCT 📦</label>
+          <input type="text" id="brand-product" class="form-input" placeholder="Enter your product name">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="brand-brief">BRAND BRIEF 📝</label>
+          <textarea id="brand-brief" class="form-textarea" placeholder="Enter a brief description of your brand"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="brand-website">BRAND WEBSITE 🌐</label>
+          <input type="url" id="brand-website" class="form-input" placeholder="https://yourbrand.com">
+        </div>
+        
+        <div class="form-group">
+          <button class="search-button" id="upload-images-btn">UPLOAD BRANDING IMAGES 🖼️</button>
+          <input type="file" id="brand-images" class="file-input-container" accept=".png,.jpg,.jpeg" multiple>
+        </div>
+        
+        <button class="next-step-button" id="go-to-trends">STEP 2 - TRENDS</button>
+      </div>
+      
+      <div class="page-block" id="trends-block">
+        <div class="selection-box">
+          <table>
+            <tbody>
+              <tr>
+                <td class="option-text">Option 1<button class="expand-button">🔍</button></td>
+                <td class="option-select"><input type="radio" name="trend-option" value="1"></td>
+              </tr>
+              <tr>
+                <td class="option-text">Option 2<button class="expand-button">🔍</button></td>
+                <td class="option-select"><input type="radio" name="trend-option" value="2"></td>
+              </tr>
+              <tr>
+                <td class="option-text">Option 3<button class="expand-button">🔍</button></td>
+                <td class="option-select"><input type="radio" name="trend-option" value="3"></td>
+              </tr>
+              <tr>
+                <td class="option-text">Option 4<button class="expand-button">🔍</button></td>
+                <td class="option-select"><input type="radio" name="trend-option" value="4"></td>
+              </tr>
+              <tr>
+                <td class="option-text">Option 5<button class="expand-button">🔍</button></td>
+                <td class="option-select"><input type="radio" name="trend-option" value="5"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="search-button" id="step3-button" disabled>STEP 3: CONTENT</button>
+      </div>
+      
+      <div class="page-block" id="content-block">
+        <div class="selection-box" style="height: 70%; margin-bottom: 30px;">
+          <textarea id="image-prompt" class="form-textarea" style="height: 100%; background-color: #FFF199;" 
+            onfocus="if(this.getAttribute('data-default-shown')==='false') return; this.setAttribute('data-default-shown', 'false'); this.value=this.getAttribute('data-default-value')" 
+            data-default-shown="true"
+            data-default-value="Create a vibrant, eye-catching promotional image for a food brand that incorporates trending meme aesthetics. Include bold, quirky typography with a playful message about the product. Use bright, contrasting colors and incorporate elements that convey both humor and appetite appeal. The composition should be shareable-friendly for social media platforms like Instagram.">Create a vibrant, eye-catching promotional image for a food brand that incorporates trending meme aesthetics. Include bold, quirky typography with a playful message about the product. Use bright, contrasting colors and incorporate elements that convey both humor and appetite appeal. The composition should be shareable-friendly for social media platforms like Instagram.</textarea>
+        </div>
+        <div style="display: flex; gap: 20px; width: 100%;">
+          <button class="search-button" id="generate-content-btn" style="flex: 1;">GENERATE CONTENT</button>
+          <button class="next-step-button" id="go-to-posting" style="flex: 1;">STEP 4: POSTING</button>
+        </div>
+      </div>
+      
+      <div class="page-block" id="posting-block">
+        <div style="display: flex; gap: 20px; width: 100%; margin-bottom: 20px;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label" for="insta-username">USERNAME 👤</label>
+            <input type="text" id="insta-username" class="form-input" placeholder="Instagram username">
+    </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label" for="insta-password">PASSWORD 🔒</label>
+            <input type="password" id="insta-password" class="form-input" placeholder="Instagram password">
+    </div>
+    </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="post-caption">CAPTION 📣</label>
+          <textarea id="post-caption" class="form-textarea" placeholder="Enter your post caption with hashtags"></textarea>
+    </div>
+
+        <button class="search-button">POST TO INSTAGRAM</button>
+      </div>
+
+      <!-- Reset Button -->
+      <button class="reset-button" id="reset-button">🔄</button>
+
+      <!-- Nav -->
+    <div class="nav-container">
+        <button class="nav-button">BRANDING</button>
+        <button class="nav-button active">TRENDS</button>
+        <button class="nav-button">CONTENT</button>
+        <button class="nav-button">POSTING</button>
+      </div>
+    </div>
+    <script>
+      let isAnimating = false;
+      const navButtons = document.querySelectorAll('.nav-button');
+      const blocks = document.querySelectorAll('.page-block');
+      
+      // Function to call Python script via fetch API
+      async function callTrendSearch() {
+        const brandName = document.getElementById('brand-name').value.trim();
+        const brandProduct = document.getElementById('brand-product').value.trim();
+        const brandBrief = document.getElementById('brand-brief').value.trim();
+        const brandWebsite = document.getElementById('brand-website').value.trim();
+        
+        // Show loading indicator
+        document.getElementById('loading-indicator').style.display = 'block';
+        
+        try {
+          console.log('Sending data to backend:', {
+            brand_name: brandName,
+            brand_description: brandBrief,
+            brand_website: brandWebsite,
+            product_type: brandProduct
+          });
+          
+          const response = await fetch('/trend_search', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              brand_name: brandName,
+              brand_description: brandBrief,
+              brand_website: brandWebsite,
+              product_type: brandProduct
+            })
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`HTTP error! Status: ${response.status}. Details: ${errorText}`);
+          }
+          
+          const data = await response.json();
+          console.log('Received data from backend:', data);
+          
+          // Display the JSON response in the output container
+          const outputContainer = document.getElementById('json-output');
+          outputContainer.textContent = JSON.stringify(data, null, 2);
+          outputContainer.style.display = 'block';
+          
+          // Populate the trend options with the ideas from the response
+          populateTrendOptions(data);
+          
+        } catch (error) {
+          console.error('Error calling trend_search:', error);
+          alert('Error searching for trends. Please try again. Details: ' + error.message);
+        } finally {
+          // Hide loading indicator
+          document.getElementById('loading-indicator').style.display = 'none';
+        }
+      }
+      
+      // Populate trend options with the ideas from the API response
+      function populateTrendOptions(data) {
+        const trendsTable = document.querySelector('#trends-block .selection-box table tbody');
+        trendsTable.innerHTML = ''; // Clear existing options
+        
+        let ideaIndex = 1;
+        for (const idea in data) {
+          if (data.hasOwnProperty(idea) && Array.isArray(data[idea]) && data[idea].length > 0) {
+            const ideaData = data[idea][0];
+            
+            const row = document.createElement('tr');
+            
+            const textCell = document.createElement('td');
+            textCell.className = 'option-text';
+            textCell.textContent = ideaData.title;
+            
+            const expandButton = document.createElement('button');
+            expandButton.className = 'expand-button';
+            expandButton.textContent = '🔍';
+            expandButton.onclick = function() {
+              alert(`${ideaData.prompt}\n\nCaption: ${ideaData.caption}`);
+            };
+            
+            textCell.appendChild(expandButton);
+            
+            const selectCell = document.createElement('td');
+            selectCell.className = 'option-select';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'trend-option';
+            radio.value = ideaIndex;
+            radio.dataset.prompt = ideaData.prompt;
+            radio.dataset.caption = ideaData.caption;
+            
+            selectCell.appendChild(radio);
+            
+            row.appendChild(textCell);
+            row.appendChild(selectCell);
+            
+            trendsTable.appendChild(row);
+            ideaIndex++;
+          }
+        }
+        
+        // Re-attach event listeners for the radio buttons
+        document.querySelectorAll('input[name="trend-option"]').forEach(radio => {
+          radio.addEventListener('change', function() {
+            const step3Btn = document.getElementById('step3-button');
+            step3Btn.disabled = false;
+            step3Btn.classList.add('enabled');
+            
+            // Store selected prompt in the image prompt textarea
+            const imagePrompt = document.getElementById('image-prompt');
+            imagePrompt.value = this.dataset.prompt;
+            
+            // Store caption in post caption textarea
+            const postCaption = document.getElementById('post-caption');
+            postCaption.value = this.dataset.caption;
+          });
+        });
+      }
+      
+      function changePage(from, to) {
+        if (isAnimating) return;
+        isAnimating = true;
+        const current = from;
+        const next = to;
+        if (current === next) { isAnimating = false; return; }
+        current.classList.add('shake');
+        current.addEventListener('animationend', () => {
+          current.classList.remove('shake');
+          current.classList.add('zip-out');
+          current.addEventListener('animationend', () => {
+            current.classList.remove('zip-out','active');
+            current.style.display = 'none';
+            next.style.display = 'flex';
+            next.classList.add('zip-in');
+            next.addEventListener('animationend', () => {
+              next.classList.remove('zip-in');
+              next.classList.add('active');
+              isAnimating = false;
+            }, { once: true });
+          }, { once: true });
+        }, { once: true });
+      }
+      
+      // Check if all branding fields are filled
+      function checkBrandingFields() {
+        const brandName = document.getElementById('brand-name').value.trim();
+        const brandProduct = document.getElementById('brand-product').value.trim();
+        const brandBrief = document.getElementById('brand-brief').value.trim();
+        const brandWebsite = document.getElementById('brand-website').value.trim();
+        const fileInput = document.getElementById('brand-images');
+        
+        const nextButton = document.getElementById('go-to-trends');
+        
+        if (brandName && brandProduct && brandBrief && brandWebsite && fileInput.files.length > 0) {
+          nextButton.disabled = false;
+          nextButton.classList.add('enabled');
+        } else {
+          nextButton.disabled = true;
+          nextButton.classList.remove('enabled');
+        }
+      }
+      
+      // Reset all form fields
+      function resetAllFields() {
+        document.getElementById('brand-name').value = '';
+        document.getElementById('brand-industry').selectedIndex = 0;
+        document.getElementById('brand-product').value = '';
+        document.getElementById('brand-brief').value = '';
+        document.getElementById('brand-website').value = '';
+        
+        const uploadBtn = document.getElementById('upload-images-btn');
+        uploadBtn.classList.remove('uploaded');
+        
+        const existingCount = uploadBtn.querySelector('.file-count');
+        if (existingCount) {
+          existingCount.remove();
+        }
+        
+        document.getElementById('brand-images').value = '';
+        
+        // Reset step 2 button
+        const nextButton = document.getElementById('go-to-trends');
+        nextButton.disabled = true;
+        nextButton.classList.remove('enabled');
+        
+        // Reset trend options (radio buttons)
+        document.querySelectorAll('input[name="trend-option"]').forEach(radio => {
+          radio.checked = false;
+        });
+        
+        // Reset step 3 button
+        const step3Button = document.getElementById('step3-button');
+        if (step3Button) {
+          step3Button.disabled = true;
+          step3Button.classList.remove('enabled');
+        }
+        
+        // Reset image prompt
+        const imagePrompt = document.getElementById('image-prompt');
+        if (imagePrompt) {
+          imagePrompt.setAttribute('data-default-shown', 'true');
+          imagePrompt.value = imagePrompt.getAttribute('data-default-value');
+        }
+        
+        // Hide JSON output container
+        document.getElementById('json-output').style.display = 'none';
+      }
+      
+      // Initialize with the Start Now button
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('start-block').classList.add('active');
+        
+        // Start button click handler
+        document.querySelector('.start-button').addEventListener('click', function() {
+          changePage(document.getElementById('start-block'), document.getElementById('branding-block'));
+        });
+        
+        // Upload images button click handler
+        document.getElementById('upload-images-btn').addEventListener('click', function() {
+          document.getElementById('brand-images').click();
+        });
+        
+        // File input change handler
+        document.getElementById('brand-images').addEventListener('change', function(e) {
+          const uploadBtn = document.getElementById('upload-images-btn');
+          
+          if (this.files.length > 4) {
+            alert('You can only upload a maximum of 4 images.');
+            this.value = '';
+            return;
+          }
+          
+          if (this.files.length > 0) {
+            // Remove any existing file count element
+            const existingCount = uploadBtn.querySelector('.file-count');
+            if (existingCount) {
+              existingCount.remove();
+            }
+            
+            // Add the green color to the button
+            uploadBtn.classList.add('uploaded');
+            
+            // Create file count element
+            const fileCount = document.createElement('span');
+            fileCount.className = 'file-count';
+            fileCount.textContent = `${this.files.length} Uploaded`;
+            uploadBtn.appendChild(fileCount);
+          } else {
+            // Reset button if no files
+            uploadBtn.classList.remove('uploaded');
+            const existingCount = uploadBtn.querySelector('.file-count');
+            if (existingCount) {
+              existingCount.remove();
+            }
+          }
+          
+          checkBrandingFields();
+        });
+        
+        // Add input listeners to check fields
+        ['brand-name', 'brand-brief', 'brand-website'].forEach(id => {
+          document.getElementById(id).addEventListener('input', checkBrandingFields);
+        });
+        
+        // Disable the Step 2 button initially
+        document.getElementById('go-to-trends').disabled = true;
+        
+        // Step 2 button click handler
+        document.getElementById('go-to-trends').addEventListener('click', function() {
+          // First call the trend search API
+          callTrendSearch().then(() => {
+            // Then change to the trends page
+            changePage(document.getElementById('branding-block'), document.getElementById('trends-block'));
+          });
+        });
+        
+        // Enable Step 3 button when an option is selected
+        document.querySelectorAll('input[name="trend-option"]').forEach(radio => {
+          radio.addEventListener('change', function() {
+            const step3Btn = document.getElementById('step3-button');
+            step3Btn.disabled = false;
+            step3Btn.classList.add('enabled');
+          });
+        });
+        
+        // Step 3 button click handler
+        document.getElementById('step3-button').addEventListener('click', function() {
+          changePage(document.getElementById('trends-block'), document.getElementById('content-block'));
+        });
+        
+        // Step 4 button click handler
+        document.getElementById('go-to-posting').addEventListener('click', function() {
+          changePage(document.getElementById('content-block'), document.getElementById('posting-block'));
+        });
+        
+        // Reset button click handler
+        document.getElementById('reset-button').addEventListener('click', function() {
+          // Get current active block
+          const currentBlock = document.querySelector('.page-block.active');
+          changePage(currentBlock, document.getElementById('start-block'));
+          
+          // Reset all fields
+          resetAllFields();
+        });
+      });
+    </script>
+  </body>
+</html> 
