@@ -42,7 +42,7 @@ def rag_website(brand_url):
         
         print(f"Sending RAG request for website: {brand_url}")
         response = openai_client.responses.create(
-            model="gpt-4.1-mini",
+            model="gpt-4o",
             tools=[{
                 "type": "web_search_preview",
                 "user_location": {

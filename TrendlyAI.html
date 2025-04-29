@@ -504,15 +504,16 @@
       </div>
       
       <div class="page-block" id="content-block">
-        <div class="selection-box" style="height: 70%; margin-bottom: 30px;">
-          <textarea id="image-prompt" class="form-textarea" style="height: 100%; background-color: #FFF199;" 
-            onfocus="if(this.getAttribute('data-default-shown')==='false') return; this.setAttribute('data-default-shown', 'false'); this.value=this.getAttribute('data-default-value')" 
-            data-default-shown="true"
-            data-default-value="Create a vibrant, eye-catching promotional image for a food brand that incorporates trending meme aesthetics. Include bold, quirky typography with a playful message about the product. Use bright, contrasting colors and incorporate elements that convey both humor and appetite appeal. The composition should be shareable-friendly for social media platforms like Instagram.">Create a vibrant, eye-catching promotional image for a food brand that incorporates trending meme aesthetics. Include bold, quirky typography with a playful message about the product. Use bright, contrasting colors and incorporate elements that convey both humor and appetite appeal. The composition should be shareable-friendly for social media platforms like Instagram.</textarea>
+        <div class="selection-box" style="height: 70%; margin-bottom: 20px;">
+          <textarea id="image-prompt" class="form-textarea" style="height: 100%; background-color: #FFF199;"></textarea>
         </div>
-        <div style="display: flex; gap: 20px; width: 100%;">
-          <button class="search-button" id="generate-content-btn" style="flex: 1;">GENERATE CONTENT</button>
-          <button class="next-step-button" id="go-to-posting" style="flex: 1;">STEP 4: POSTING</button>
+        <div id="generated-image-container" style="display: none; margin-bottom: 20px; text-align: center;">
+          <img id="generated-image" style="max-width: 100%; max-height: 300px; border: 3px solid #000; border-radius: 8px;" />
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+          <button class="search-button" id="generate-content-btn">GENERATE CONTENT</button>
+          <button class="search-button" id="download-image-btn" style="display: none; background-color: #2ecc71;">DOWNLOAD IMAGE</button>
+          <button class="next-step-button" id="go-to-posting">STEP 4: POSTING</button>
         </div>
       </div>
       
@@ -521,19 +522,26 @@
           <div class="form-group" style="flex: 1; margin-bottom: 0;">
             <label class="form-label" for="insta-username">USERNAME 👤</label>
             <input type="text" id="insta-username" class="form-input" placeholder="Instagram username">
-    </div>
+          </div>
           <div class="form-group" style="flex: 1; margin-bottom: 0;">
             <label class="form-label" for="insta-password">PASSWORD 🔒</label>
             <input type="password" id="insta-password" class="form-input" placeholder="Instagram password">
-    </div>
-    </div>
+          </div>
+        </div>
         
         <div class="form-group">
           <label class="form-label" for="post-caption">CAPTION 📣</label>
           <textarea id="post-caption" class="form-textarea" placeholder="Enter your post caption with hashtags"></textarea>
-    </div>
-
-        <button class="search-button">POST TO INSTAGRAM</button>
+        </div>
+        
+        <div id="posting-image-preview" style="margin: 20px 0; text-align: center; display: none;">
+          <p style="margin-bottom: 10px; color: #000; font-size: 14px;">Image to be posted:</p>
+          <img id="posting-image" style="max-width: 100%; max-height: 200px; border: 3px solid #000; border-radius: 8px;" />
+        </div>
+        
+        <div id="posting-status" style="margin: 15px 0; padding: 10px; border-radius: 5px; display: none;"></div>
+        
+        <button class="search-button" id="post-to-instagram-btn">POST TO INSTAGRAM</button>
       </div>
 
       <!-- Reset Button -->
@@ -753,12 +761,218 @@
         // Reset image prompt
         const imagePrompt = document.getElementById('image-prompt');
         if (imagePrompt) {
-          imagePrompt.setAttribute('data-default-shown', 'true');
-          imagePrompt.value = imagePrompt.getAttribute('data-default-value');
+          imagePrompt.value = '';
         }
         
-        // Hide JSON output container
-        document.getElementById('json-output').style.display = 'none';
+        // Reset post caption
+        const postCaption = document.getElementById('post-caption');
+        if (postCaption) {
+          postCaption.value = '';
+        }
+        
+        // Hide generated image and download button
+        document.getElementById('generated-image-container').style.display = 'none';
+        document.getElementById('download-image-btn').style.display = 'none';
+        
+        // Reset generate button text
+        const generateBtn = document.getElementById('generate-content-btn');
+        if (generateBtn) {
+          generateBtn.textContent = 'GENERATE CONTENT';
+        }
+        
+        // Reset Instagram posting fields
+        document.getElementById('insta-username').value = '';
+        document.getElementById('insta-password').value = '';
+        
+        // Hide posting image preview
+        const postingPreview = document.getElementById('posting-image-preview');
+        if (postingPreview) {
+          postingPreview.style.display = 'none';
+        }
+        
+        // Hide posting status
+        const postingStatus = document.getElementById('posting-status');
+        if (postingStatus) {
+          postingStatus.style.display = 'none';
+        }
+        
+        // Re-enable Instagram post button if it was disabled
+        const postButton = document.getElementById('post-to-instagram-btn');
+        if (postButton) {
+          postButton.disabled = false;
+        }
+      }
+      
+      // Function to generate image
+      async function generateImage() {
+        const prompt = document.getElementById('image-prompt').value.trim();
+        if (!prompt) {
+          alert("Please enter a prompt for image generation");
+          return;
+        }
+        
+        const files = document.getElementById('brand-images').files;
+        if (!files || files.length === 0) {
+          alert("Please upload at least one branding image");
+          return;
+        }
+        
+        document.getElementById('loading-indicator').textContent = "GENERATING IMAGE";
+        document.getElementById('loading-indicator').style.display = 'block';
+        
+        try {
+          // Create form data to send files
+          const formData = new FormData();
+          formData.append('prompt', prompt);
+          
+          // Append all selected files
+          for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+          }
+          
+          // Send request to server
+          const response = await fetch('/generate_image', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}. Details: ${errorText}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Display the generated image
+            const imgElement = document.getElementById('generated-image');
+            imgElement.src = `data:image/jpeg;base64,${data.image_base64}`;
+            
+            // Show the image container
+            document.getElementById('generated-image-container').style.display = 'block';
+            
+            // Show download button
+            document.getElementById('download-image-btn').style.display = 'block';
+            
+            // Rename the generate button to "Re-generate Content"
+            document.getElementById('generate-content-btn').textContent = "RE-GENERATE CONTENT";
+          } else {
+            throw new Error(data.error || "Unknown error generating image");
+          }
+        } catch (error) {
+          console.error('Error generating image:', error);
+          alert('Error generating image: ' + error.message);
+        } finally {
+          document.getElementById('loading-indicator').style.display = 'none';
+        }
+      }
+      
+      // Function to download the generated image
+      function downloadImage() {
+        const imgElement = document.getElementById('generated-image');
+        if (!imgElement.src) {
+          alert("No image has been generated yet.");
+          return;
+        }
+        
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = imgElement.src;
+        link.download = 'trendly-generated-image.jpg';
+        
+        // Append to the body, click it, and remove it
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      // Function to post to Instagram
+      async function postToInstagram() {
+        const username = document.getElementById('insta-username').value.trim();
+        const password = document.getElementById('insta-password').value.trim();
+        const caption = document.getElementById('post-caption').value.trim();
+        
+        // Validate fields
+        if (!username || !password) {
+          alert("Please enter your Instagram username and password");
+          return;
+        }
+        
+        if (!caption) {
+          alert("Please enter a caption for your post");
+          return;
+        }
+        
+        // Check if we have a generated image
+        const imgElement = document.getElementById('generated-image');
+        if (!imgElement.src) {
+          alert("No image has been generated yet. Please generate an image first.");
+          return;
+        }
+        
+        document.getElementById('loading-indicator').textContent = "POSTING TO INSTAGRAM";
+        document.getElementById('loading-indicator').style.display = 'block';
+        
+        // Show status
+        const statusElement = document.getElementById('posting-status');
+        statusElement.style.display = 'block';
+        statusElement.style.backgroundColor = '#f8d7da';
+        statusElement.style.color = '#721c24';
+        statusElement.textContent = "Posting to Instagram... Please wait, this may take a minute.";
+        
+        // Disable the post button
+        const postButton = document.getElementById('post-to-instagram-btn');
+        postButton.disabled = true;
+        
+        try {
+          // The generated image is saved at the server's 'generated.jpeg'
+          const response = await fetch('/post_to_instagram', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              username: username,
+              password: password,
+              caption: caption,
+              image_path: 'generated.jpeg'  // This is where the image is saved on the server
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && data.success) {
+            // Show success message
+            statusElement.style.backgroundColor = '#d4edda';
+            statusElement.style.color = '#155724';
+            statusElement.textContent = "✅ " + data.message;
+          } else {
+            // Show error message
+            throw new Error(data.error || "Failed to post to Instagram");
+          }
+        } catch (error) {
+          console.error('Error posting to Instagram:', error);
+          statusElement.style.backgroundColor = '#f8d7da';
+          statusElement.style.color = '#721c24';
+          statusElement.textContent = "❌ Error: " + error.message;
+        } finally {
+          document.getElementById('loading-indicator').style.display = 'none';
+          postButton.disabled = false;
+        }
+      }
+      
+      // When moving to the posting page, copy the current image
+      function updatePostingImagePreview() {
+        const generatedImage = document.getElementById('generated-image');
+        const postingImage = document.getElementById('posting-image');
+        const previewContainer = document.getElementById('posting-image-preview');
+        
+        if (generatedImage.src) {
+          postingImage.src = generatedImage.src;
+          previewContainer.style.display = 'block';
+        } else {
+          previewContainer.style.display = 'none';
+        }
       }
       
       // Initialize with the Start Now button
@@ -845,6 +1059,7 @@
         
         // Step 4 button click handler
         document.getElementById('go-to-posting').addEventListener('click', function() {
+          updatePostingImagePreview();
           changePage(document.getElementById('content-block'), document.getElementById('posting-block'));
         });
         
@@ -857,6 +1072,15 @@
           // Reset all fields
           resetAllFields();
         });
+        
+        // Generate content button click handler
+        document.getElementById('generate-content-btn').addEventListener('click', generateImage);
+        
+        // Download image button click handler
+        document.getElementById('download-image-btn').addEventListener('click', downloadImage);
+        
+        // Post to Instagram button click handler
+        document.getElementById('post-to-instagram-btn').addEventListener('click', postToInstagram);
       });
     </script>
   </body>

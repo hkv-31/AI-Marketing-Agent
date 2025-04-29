@@ -26,38 +26,64 @@ def load_api_keys():
 OPENAI_API_KEY = load_api_keys()
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY if OPENAI_API_KEY else ""
 
-def generate_image(prompt):
+def generate_image(prompt, image_paths):
     # API MODEL
     client = OpenAI()
 
-    #prompt = """
-    #  Generate an image of a poster on saving water, showing a water bottle and a plant.
-    #"""
+    try:
+        # Handle single or multiple images
+        opened_files = []  # Track opened files to ensure we close them
 
-    result = client.images.edit(
-        model="gpt-image-1",
-        image=open("/Users/rushiljhaveri/Desktop/Coding/AIAgents/stock.png", "rb"),
-        prompt=prompt,
-        output_format="jpeg",
-        size="1024x1024",
-        #size="1024x1024",
-        #quality="high"
-    )
+        if isinstance(image_paths, list):
+            if len(image_paths) == 1:
+                # Single image case
+                image = open(image_paths[0], "rb")
+                opened_files.append(image)
+            else:
+                # Multiple images case - pass all images as a list
+                image = []
+                for path in image_paths:
+                    file = open(path, "rb")
+                    opened_files.append(file)
+                    image.append(file)
+        else:
+            # Single image passed directly
+            image = open(image_paths, "rb")
+            opened_files.append(image)
 
-    image_base64 = result.data[0].b64_json
-    image_bytes = base64.b64decode(image_base64)
+        result = client.images.edit(
+            model="gpt-image-1",
+            image=image,  # This will be either a single image or a list of images
+            prompt=prompt,
+            size="1024x1024"
+        )
 
-    # Save the image to a file
-    with open("generated.jpeg", "wb") as f:
-        f.write(image_bytes)
+        image_base64 = result.data[0].b64_json
+        image_bytes = base64.b64decode(image_base64)
+
+        # Save the image to a file
+        output_path = "generated.jpeg"
+        with open(output_path, "wb") as f:
+            f.write(image_bytes)
+        
+        return {"image_base64": image_base64, "image_path": output_path}
     
-    return image_bytes
+    finally:
+        # Close all opened files
+        for file in opened_files:
+            try:
+                file.close()
+            except:
+                pass  # Ignore errors in cleanup
 
-def main(prompt=None):
+def main(prompt=None, image_paths=None):
     if prompt is None:
         print("Error: No prompt provided")
         return None
-    return generate_image(prompt)
+    if image_paths is None or (isinstance(image_paths, list) and len(image_paths) == 0):
+        print("Error: No image paths provided")
+        return None
+    return generate_image(prompt, image_paths)
 
 if __name__ == "__main__":
     main()
