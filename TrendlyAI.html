@@ -56,7 +56,7 @@
         top: calc(20px + 15vh); /* Increased from 10vh to 15vh */
         left: 50%;
         transform: translateX(-50%);
-        font-size: 70px;
+        font-size: 84px; /* Increased by 20% from 70px to 84px */
         letter-spacing: 10px;
         color: white;
         text-shadow: 5px 5px 0 #000, 
@@ -504,6 +504,9 @@
       </div>
       
       <div class="page-block" id="content-block">
+        <div style="width: 100%; display: flex; justify-content: flex-start; margin-bottom: 10px;">
+          <button class="search-button" id="back-to-trends-btn" style="padding: 5px 15px; height: auto; font-size: 12px;">← BACK TO TRENDS</button>
+        </div>
         <div class="selection-box" style="height: 70%; margin-bottom: 20px;">
           <textarea id="image-prompt" class="form-textarea" style="height: 100%; background-color: #FFF199;"></textarea>
         </div>
@@ -518,6 +521,9 @@
       </div>
       
       <div class="page-block" id="posting-block">
+        <div style="width: 100%; display: flex; justify-content: flex-start; margin-bottom: 10px;">
+          <button class="search-button" id="back-to-content-btn" style="padding: 5px 15px; height: auto; font-size: 12px;">← BACK TO CONTENT</button>
+        </div>
         <div style="display: flex; gap: 20px; width: 100%; margin-bottom: 20px;">
           <div class="form-group" style="flex: 1; margin-bottom: 0;">
             <label class="form-label" for="insta-username">USERNAME 👤</label>
@@ -526,19 +532,19 @@
           <div class="form-group" style="flex: 1; margin-bottom: 0;">
             <label class="form-label" for="insta-password">PASSWORD 🔒</label>
             <input type="password" id="insta-password" class="form-input" placeholder="Instagram password">
-          </div>
-        </div>
+    </div>
+    </div>
         
         <div class="form-group">
           <label class="form-label" for="post-caption">CAPTION 📣</label>
           <textarea id="post-caption" class="form-textarea" placeholder="Enter your post caption with hashtags"></textarea>
-        </div>
+    </div>
         
         <div id="posting-image-preview" style="margin: 20px 0; text-align: center; display: none;">
           <p style="margin-bottom: 10px; color: #000; font-size: 14px;">Image to be posted:</p>
           <img id="posting-image" style="max-width: 100%; max-height: 200px; border: 3px solid #000; border-radius: 8px;" />
-        </div>
-        
+    </div>
+
         <div id="posting-status" style="margin: 15px 0; padding: 10px; border-radius: 5px; display: none;"></div>
         
         <button class="search-button" id="post-to-instagram-btn">POST TO INSTAGRAM</button>
@@ -560,12 +566,82 @@
       const navButtons = document.querySelectorAll('.nav-button');
       const blocks = document.querySelectorAll('.page-block');
       
+      // Function to disable all interactive elements during operations
+      function disableUI(isDisabled) {
+        // Get all interactive elements
+        const buttons = document.querySelectorAll('button');
+        const inputs = document.querySelectorAll('input');
+        const textareas = document.querySelectorAll('textarea');
+        const selects = document.querySelectorAll('select');
+        const resetButton = document.getElementById('reset-button');
+        
+        // Disable or enable all elements
+      buttons.forEach(button => {
+          button.disabled = isDisabled;
+          if (isDisabled) {
+            button.style.opacity = '0.5';
+            button.style.cursor = 'not-allowed';
+          } else {
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+          }
+        });
+        
+        inputs.forEach(input => {
+          input.disabled = isDisabled;
+          if (isDisabled) {
+            input.style.opacity = '0.5';
+            input.style.cursor = 'not-allowed';
+          } else {
+            input.style.opacity = '1';
+            input.style.cursor = 'auto';
+          }
+        });
+        
+        textareas.forEach(textarea => {
+          textarea.disabled = isDisabled;
+          if (isDisabled) {
+            textarea.style.opacity = '0.5';
+            textarea.style.cursor = 'not-allowed';
+          } else {
+            textarea.style.opacity = '1';
+            textarea.style.cursor = 'auto';
+          }
+        });
+        
+        selects.forEach(select => {
+          select.disabled = isDisabled;
+          if (isDisabled) {
+            select.style.opacity = '0.5';
+            select.style.cursor = 'not-allowed';
+          } else {
+            select.style.opacity = '1';
+            select.style.cursor = 'pointer';
+          }
+        });
+        
+        // Special handling for the reset button
+        if (resetButton) {
+          resetButton.disabled = isDisabled;
+          if (isDisabled) {
+            resetButton.style.opacity = '0.5';
+            resetButton.style.cursor = 'not-allowed';
+          } else {
+            resetButton.style.opacity = '1';
+            resetButton.style.cursor = 'pointer';
+          }
+        }
+      }
+      
       // Function to call Python script via fetch API
       async function callTrendSearch() {
         const brandName = document.getElementById('brand-name').value.trim();
         const brandProduct = document.getElementById('brand-product').value.trim();
         const brandBrief = document.getElementById('brand-brief').value.trim();
         const brandWebsite = document.getElementById('brand-website').value.trim();
+        
+        // Disable UI during operation
+        disableUI(true);
         
         // Show loading indicator
         document.getElementById('loading-indicator').style.display = 'block';
@@ -612,6 +688,8 @@
           console.error('Error calling trend_search:', error);
           alert('Error searching for trends. Please try again. Details: ' + error.message);
         } finally {
+          // Re-enable UI
+          disableUI(false);
           // Hide loading indicator
           document.getElementById('loading-indicator').style.display = 'none';
         }
@@ -817,6 +895,9 @@
           return;
         }
         
+        // Disable UI during operation
+        disableUI(true);
+        
         document.getElementById('loading-indicator').textContent = "GENERATING IMAGE";
         document.getElementById('loading-indicator').style.display = 'block';
         
@@ -863,6 +944,8 @@
           console.error('Error generating image:', error);
           alert('Error generating image: ' + error.message);
         } finally {
+          // Re-enable UI
+          disableUI(false);
           document.getElementById('loading-indicator').style.display = 'none';
         }
       }
@@ -910,6 +993,9 @@
           return;
         }
         
+        // Disable UI during operation
+        disableUI(true);
+        
         document.getElementById('loading-indicator').textContent = "POSTING TO INSTAGRAM";
         document.getElementById('loading-indicator').style.display = 'block';
         
@@ -919,10 +1005,6 @@
         statusElement.style.backgroundColor = '#f8d7da';
         statusElement.style.color = '#721c24';
         statusElement.textContent = "Posting to Instagram... Please wait, this may take a minute.";
-        
-        // Disable the post button
-        const postButton = document.getElementById('post-to-instagram-btn');
-        postButton.disabled = true;
         
         try {
           // The generated image is saved at the server's 'generated.jpeg'
@@ -956,8 +1038,9 @@
           statusElement.style.color = '#721c24';
           statusElement.textContent = "❌ Error: " + error.message;
         } finally {
+          // Re-enable UI
+          disableUI(false);
           document.getElementById('loading-indicator').style.display = 'none';
-          postButton.disabled = false;
         }
       }
       
@@ -1081,6 +1164,16 @@
         
         // Post to Instagram button click handler
         document.getElementById('post-to-instagram-btn').addEventListener('click', postToInstagram);
+        
+        // Back to trends button click handler
+        document.getElementById('back-to-trends-btn').addEventListener('click', function() {
+          changePage(document.getElementById('content-block'), document.getElementById('trends-block'));
+        });
+        
+        // Back to content button click handler
+        document.getElementById('back-to-content-btn').addEventListener('click', function() {
+          changePage(document.getElementById('posting-block'), document.getElementById('content-block'));
+        });
       });
     </script>
   </body>

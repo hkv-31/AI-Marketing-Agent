@@ -54,10 +54,11 @@ def rag_website(brand_url):
             input=rag_prompt,
         )
         
+        # Handle the response and ensure we return a string
         if hasattr(response, 'text'):
-            return response.text
+            return str(response.text)
         elif hasattr(response, 'output_text'):
-            return response.output_text
+            return str(response.output_text)
         else:
             print("RAG response has neither 'text' nor 'output_text' attribute")
             print("Response attributes:", dir(response))
@@ -83,6 +84,11 @@ def trend_search(brand_name, brand_desription, brand_website, product_type):
         if brand_website:
             print(f"Fetching website data for: {brand_website}")
             website_info = rag_website(brand_website)
+            
+            # Ensure website_info is a string before concatenation
+            if not isinstance(website_info, str):
+                website_info = str(website_info)
+                
             brand_brief = brand_desription + "\n" + website_info
         else:
             print("No website provided, skipping RAG")
@@ -100,7 +106,7 @@ def trend_search(brand_name, brand_desription, brand_website, product_type):
     try:
         print("Sending request to OpenAI API...")
         response = openai_client.responses.create(
-            model="gpt-4.1-mini",
+            model="gpt-4o",
             tools=[{
                 "type": "web_search_preview",
                 "user_location": {
@@ -113,7 +119,9 @@ def trend_search(brand_name, brand_desription, brand_website, product_type):
         )
         
         print("Got response from OpenAI API")
-        output = response.output_text
+        
+        # Ensure output_text is converted to string
+        output = str(response.output_text) if hasattr(response, 'output_text') else ""
         print("Output type:", type(output))
         print("Output sample:", output[:100] if output else "Empty output")
         
