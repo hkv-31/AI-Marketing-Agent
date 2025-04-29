@@ -1,15 +1,15 @@
 # webSearch.py
 
-from openai import OpenAI
+from openai import OpenAI # type: ignore
 import os
 import json
-from google import genai
-from google.genai import types
+from google import genai # type: ignore
+from google.genai import types # type: ignore
 
 # Load API keys dynamically
 
 def load_api_keys():
-    keys_path =  os.getenv("KEYS_FILE", "keys.json") 
+    keys_path = "keys.json"
     try:
         with open(keys_path, 'r') as f:
             keys = json.load(f)
@@ -30,7 +30,15 @@ def trend_search():
         print("🧪 [Testing Mode] Dummy trend generated.")
         return "Dummy trend: Funny memes about futuristic food delivery."
 
-    openai_client = OpenAI()
+    # Verify API keys are available
+    if not OPENAI_API_KEY:
+        raise ValueError("OpenAI API key is missing or invalid. Please check your keys.json file.")
+    
+    if not GEMINI_API_KEY:
+        raise ValueError("Gemini API key is missing or invalid. Please check your keys.json file.")
+
+    # Create client with API key explicitly
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
     web_search_prompt = (
         "Scan the internet for the latest viral and emerging trends in food marketing, "
@@ -53,6 +61,7 @@ def trend_search():
     )
 
     output = response.output_text
+
     image_prompt_creation_prompt = "Create a prompt for an image generation model to generate an image that captures the essence of the trend described in the following text: " + output
     system_prompt = "You are a creative and imaginative image prompt creator. Your task is to generate a detailed and creative prompt for an image generation model that captures the essence of the trend described in the input text. The prompt should be concise, engaging, and evocative, encouraging the model to create a visually appealing and culturally relevant image."
 
@@ -64,6 +73,7 @@ def trend_search():
         system_instruction=system_prompt),
         contents=[image_prompt_creation_prompt]
     )
+
     output = response.text
     print("✅ Trend search completed.")
     return output

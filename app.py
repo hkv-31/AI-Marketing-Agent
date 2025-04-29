@@ -1,6 +1,6 @@
 # app.py
 
-import streamlit as st
+import streamlit as st # type: ignore
 from generateImage import generate_image
 from webSearch import trend_search
 from Instabot import upload_photo
@@ -45,7 +45,7 @@ if not st.session_state.brand_info_done:
         st.success("✅ Trend Scraping Done!")
         st.session_state.trend_summary = trend_summary
         st.session_state.brand_info_done = True
-        st.experimental_rerun()
+        #st.experimental_rerun()
 
 # Step 3: Trend Scraping Done — Show Trend Summary
 if st.session_state.brand_info_done and st.session_state.trend_summary:
@@ -78,7 +78,7 @@ if st.session_state.brand_info_done and st.session_state.trend_summary:
             st.info("🧪 Testing Mode Active: Skipping actual image preview.")
 
         st.session_state.generated_image = "generated_output.jpeg"
-        st.experimental_rerun()
+        #st.experimental_rerun()
 
 # Step 5: Show Post and Instagram Posting
 if st.session_state.generated_image:

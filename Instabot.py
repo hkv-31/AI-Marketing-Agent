@@ -2,8 +2,8 @@
 
 import os
 import sys
-from instagrapi import Client
-from instagrapi.mixins.challenge import ChallengeChoice
+from instagrapi import Client # type: ignore
+from instagrapi.mixins.challenge import ChallengeChoice # type: ignore
 
 # Config
 SESSION_FILE = "insta_session.json"
