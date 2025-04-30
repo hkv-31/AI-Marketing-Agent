@@ -54,7 +54,7 @@ def generate_image(prompt, image_paths):
         result = client.images.edit(
             model="gpt-image-1",
             image=image,  # This will be either a single image or a list of images
-            prompt=prompt + "Ensure that all the content fits within the image, and that none of the content is cut off.",
+            prompt=prompt + "Ensure that all the content fits within the image, and that none of the content is cut off. Also make sure that the uploaded branding images are correctly used and depicted, especially if the user has uploaded a logo.",
             size="1024x1024"
         )
 

@@ -6,7 +6,7 @@ Scan Indian internet platforms (especially Instagram and X/Twitter) for the most
 
 Extract only the top 5 highest-traction ideas (even if themes overlap) based on virality — prioritize relatable memes, parody content, low-budget guerrilla-style creativity, satirical takes on food trends, or humorous reactions to local news or culture (e.g., IPL, elections, heatwave, mango season, etc.).
 
-Each idea should include:
+Each idea should include (Ensure this idea is NOT NSFW and follows instagram content guidelines):
 - A title: short, witty, and catchy — something a user would click on (e.g., "Mango Season, But Make It Toxic", "When Pav Bhaji Becomes a Side Hustle").
 - A prompt: a full paragraph of visual description for an image generation AI — describing what the meme/post looks like, the mood, the characters (if any), food item, joke angle, and visual style (e.g., "retro ad parody", "sarcastic billboard", "Zomato-style fake promo", etc.).
 - A caption: a short, witty, Instagram-style caption (max one sentence) that complements the image and adds context or punchline to the joke.
@@ -17,7 +17,7 @@ Output format must be strict JSON as follows (no extra text, markdown, or commen
   "idea1": [
     {
       "title": "Killer Idea title here",
-      "prompt": "This will be the long descriptive prompt that will be fed to the image generation AI model",
+      "prompt": "This will be the long descriptive prompt that will be fed to the image generation AI model.",
       "caption": "This is the short, funny caption for the Instagram post"
     }
   ],

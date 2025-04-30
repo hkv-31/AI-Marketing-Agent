@@ -374,7 +374,7 @@
         cursor: pointer;
       }
 
-      /* Output display for JSON results */
+      /* Output display for JSON results
       .output-container {
         position: fixed;
         top: 20px;
@@ -392,7 +392,7 @@
         font-size: 12px;
         white-space: pre-wrap;
         color: #fff;
-      }
+      }*/
       
       .loading-indicator {
         position: fixed;
@@ -427,7 +427,7 @@
       <div class="game-title">TRENDLY AI</div>
 
       <!-- Output container for JSON results -->
-      <div class="output-container" id="json-output"></div>
+      <!--<div class="output-container" id="json-output"></div>-->
       <div class="loading-indicator" id="loading-indicator">SEARCHING FOR TRENDS</div>
 
       <!-- Page Blocks -->
@@ -677,9 +677,9 @@
           console.log('Received data from backend:', data);
           
           // Display the JSON response in the output container
-          const outputContainer = document.getElementById('json-output');
+          /*const outputContainer = document.getElementById('json-output');
           outputContainer.textContent = JSON.stringify(data, null, 2);
-          outputContainer.style.display = 'block';
+          outputContainer.style.display = 'block';*/
           
           // Populate the trend options with the ideas from the response
           populateTrendOptions(data);
